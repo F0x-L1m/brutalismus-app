@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRUTALISMUS - Track Finder</title>
+    <style>
+        :root {
+            --bg-primary: #121212; --bg-secondary: #1e1e1e; --bg-tertiary: #2a2a2a;
+            --text-primary: #e0e0e0; --text-secondary: #a0a0a0; --accent: #00ff88;
+            --accent-hover: #00cc6a; --border: #333333;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            --font-mono: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: var(--font-sans); background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #1e1e1e 0%, #121212 100%); border-bottom: 2px solid var(--accent); margin-bottom: 30px; border-radius: 0 0 25px 25px; }
+        h1 { font-size: 2.8em; font-weight: 700; letter-spacing: -1.5px; margin-bottom: 10px; background: linear-gradient(135deg, var(--accent) 0%, #00ddff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--text-secondary); font-size: 1.1em; }
+        .akt-section { background: var(--bg-secondary); border-radius: 15px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .akt-header { display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .akt-number { font-size: 2.2em; font-weight: 700; color: var(--accent); margin-right: 20px; min-width: 50px; }
+        .akt-title { font-size: 1.4em; font-weight: 600; }
+        .track-list { display: grid; gap: 12px; }
+        .track-button { font-family: var(--font-sans); font-size: 1em; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 10px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease; color: var(--text-primary); text-decoration: none; width: 100%; text-align: left; }
+        .track-button:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 136, 0.1); }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); z-index: 1000; backdrop-filter: blur(10px); padding: 20px; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: var(--bg-secondary); border-radius: 20px; padding: 30px; width: 100%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; border: 1px solid var(--border); box-shadow: 0 10px 50px rgba(0,0,0,0.5); animation: slideUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .modal-title { font-size: 1.6em; font-weight: 600; color: var(--accent); }
+        .close-button { background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-size: 1.5em; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .modal-body { overflow-y: auto; padding-right: 10px; }
+        .prompt-content { background: var(--bg-primary); border-radius: 10px; padding: 20px; font-family: var(--font-mono); font-size: 0.9em; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; }
+        footer { text-align: center; padding: 40px 20px 20px; color: var(--text-secondary); font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <header><h1>BRUTALISMUS</h1><p class="subtitle">Track Finder</p></header>
+    <div class="container" id="trackListContainer"></div>
+    <footer><p>Ein narratives Hip-Hop Album</p></footer>
+    <div class="modal" id="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title" id="modalTitle"></h2><button class="close-button" onclick="closeModal()">×</button></div><div class="modal-body"><pre class="prompt-content" id="promptContent"></pre></div></div></div>
+    <script>
+        const TRACKS = {
+            1: { title: "07:14 / Nicht-Ort", akt: 1, aktName: "DIE FASSADE", file: "prompts/Akt_1_Prompt.md" }, 2: { title: "Das Rauschen", akt: 1, aktName: "DIE FASSADE", file: "prompts/Akt_1_Prompt.md" }, 3: { title: "Konsens.txt", akt: 1, aktName: "DIE FASSADE", file: "prompts/Akt_1_Prompt.md" }, 4: { title: "Sichtbeton", akt: 1, aktName: "DIE FASSADE", file: "prompts/Akt_1_Prompt.md" }, 5: { title: "Die Nachricht (23:17)", akt: 2, aktName: "DIE RISSE", file: "prompts/Akt_2_Prompt.md" }, 6: { title: "Geister der Vergangenheit", akt: 2, aktName: "DIE RISSE", file: "prompts/Akt_2_Prompt.md" }, 7: { title: "Taxi Driver", akt: 2, aktName: "DIE RISSE", file: "prompts/Akt_2_Prompt.md" }, 8: { title: "Logik vs. Empathie (Disco Elysium)", akt: 2, aktName: "DIE RISSE", file: "prompts/Akt_2_Prompt.md" }, 9: { title: "Der Ekel (nach Sartre)", akt: 3, aktName: "DIE KERNSANIERUNG", file: "prompts/Akt_3_Prompt.md" }, 10: { title: "Geständnis", akt: 3, aktName: "DIE KERNSANIERUNG", file: "prompts/Akt_3_Prompt.md" }, 11: { title: "Der Mythos des Sisyphos", akt: 3, aktName: "DIE KERNSANIERUNG", file: "prompts/Akt_3_Prompt.md" }, 12: { title: "Der Anruf (08:05)", akt: 3, aktName: "DIE KERNSANIERUNG", file: "prompts/Akt_3_Prompt.md" }, 13: { title: "Goldener Beton", akt: 4, aktName: "DER ROHBAU", file: "prompts/Akt_4_Prompt.md" }, 14: { title: "Mein Kompass", akt: 4, aktName: "DER ROHBAU", file: "prompts/Akt_4_Prompt.md" }, 15: { title: "Bauplan für eine bessere Ruine", akt: 4, aktName: "DER ROHBAU", file: "prompts/Akt_4_Prompt.md" }, 16: { title: "Der Chronist (Outro)", akt: 4, aktName: "DER ROHBAU", file: "prompts/Akt_4_Prompt.md" }
+        };
+        const promptCache = {};
+        function renderTrackList() {
+            const container = document.getElementById('trackListContainer'); container.innerHTML = '';
+            [1, 2, 3, 4].forEach(aktNum => {
+                const aktTracks = Object.entries(TRACKS).filter(([, data]) => data.akt === aktNum).map(([num, data]) => ({ num: parseInt(num), ...data })); if (aktTracks.length === 0) return;
+                const section = document.createElement('div'); section.className = 'akt-section';
+                let trackButtonsHTML = aktTracks.map(track => `<button class="track-button" onclick="showTrackDetails(${track.num})"><div class="track-info"><div class="track-number">${track.num}</div><div class="track-title">${track.title}</div></div><div class="track-arrow">›</div></button>`).join('');
+                section.innerHTML = `<div class="akt-header"><div class="akt-number">Akt ${aktNum}</div><div class="akt-title">${aktTracks[0].aktName}</div></div><div class="track-list">${trackButtonsHTML}</div>`; container.appendChild(section);
+            });
+        }
+        async function fetchPrompt(path){if(promptCache[path])return promptCache[path];const res=await fetch(path);const text=await res.text();promptCache[path]=text;return text}
+        function extractContent(full,num,title){const esc=title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const rx=new RegExp(`^###\\s+TRACK\\s+${num}:\\s+${esc}[\\s\\S]*?(?=\\n---\\n|^###\\s+TRACK)`,'im');let match=full.match(rx);if(!match){const fall=new RegExp(`^###\\s+TRACK\\s+${num}:\\s+${esc}([\\s\\S]*?)$`,'im');match=full.match(fall)}if(match&&match[0])return match[0].trim();return"Track-Inhalt nicht gefunden."}
+        async function showTrackDetails(num){const track=TRACKS[num];const modal=document.getElementById('modal');document.getElementById('modalTitle').textContent=`Track ${num}: ${track.title}`;document.getElementById('promptContent').textContent='Lädt...';modal.classList.add('active');const full=await fetchPrompt(track.file);const content=extractContent(full,num,track.title);document.getElementById('promptContent').textContent=content}
+        function closeModal(){document.getElementById('modal').classList.remove('active')}
+        document.addEventListener('DOMContentLoaded', renderTrackList);
+        document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    </script>
+</body>
+</html>
